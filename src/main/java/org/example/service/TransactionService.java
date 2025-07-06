@@ -2,7 +2,7 @@ package org.example.service;
 
 import org.example.dto.CashRequestDto;
 import org.example.dto.TransactionDto;
-import org.example.handler.Publisher;
+import org.example.handler.LedgerRequestReplyClient;
 import org.example.model.Transaction;
 import org.example.model.TransactionStatus;
 import org.example.model.TransactionType;
@@ -19,12 +19,13 @@ public class TransactionService {
 
     private final TransactionRepository repo;
     private final LedgerClient ledger;
-    private final Publisher publisher;
+    private final LedgerRequestReplyClient legderRabbitClient;
 
-    public TransactionService(TransactionRepository repo, LedgerClient ledger, Publisher publisher) {
+    public TransactionService(TransactionRepository repo, LedgerClient ledger,LedgerRequestReplyClient legderRabbitClient) {
         this.repo = repo;
         this.ledger = ledger;
-        this.publisher = publisher;
+        //this.publisher = publisher;
+        this.legderRabbitClient = legderRabbitClient;
     }
 
     public Mono<TransactionDto> cashIn(CashRequestDto req){
@@ -36,10 +37,10 @@ public class TransactionService {
                 .createdAt(Instant.now())
                 .build();
         return repo.save(tx)
+                .flatMap(legderRabbitClient::sendTransaction)
                 .flatMap(ledger::postEntry)
                 .map(this::toDto)
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
-                .doOnSuccess(publisher::publishCreated)
                 .onErrorResume(e->rollback(tx, e));
     }
 
@@ -52,10 +53,10 @@ public class TransactionService {
                 .createdAt(Instant.now())
                 .build();
         return repo.save(tx)
+                .flatMap(legderRabbitClient::sendTransaction)
                 .flatMap(ledger::postEntry)
                 .map(this::toDto)
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
-                .doOnSuccess(publisher::publishCreated)
                 .onErrorResume(e->rollback(tx, e));
     }
 

@@ -11,17 +11,17 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AMQPConfig {
-    public static final String EXCHANGE = "transaction.exchange";
-    public static final String ROUTING_KEY = "transaction.created";
+    public static final String EXCHANGE = "ledger.exchange";
+    public static final String ROUTING_KEY = "ledger.entry.request";
 
     @Bean
-    public DirectExchange exchange(){
+    public DirectExchange ledgerExchange(){
         return new DirectExchange(EXCHANGE);
     }
 
     @Bean
-    public Queue queue(){
-        return new Queue("transaction.created.queue", true);
+    public Queue requestQueue(){
+        return new Queue("ledger.entry.request.queue", true);
     }
 
     @Bean
