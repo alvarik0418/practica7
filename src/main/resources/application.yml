@@ -1,0 +1,13 @@
+spring:
+  data:
+    mongodb:
+      uri: #urlDBMongo
+  rabbitmq:
+    addresses: #urlCloudAmqp
+ledger:
+  base-url: http://localhost:8081
+logging:
+  level:
+    org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE
+server:
+  port: 8081
